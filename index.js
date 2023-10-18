@@ -21,7 +21,7 @@ const client = new MongoClient(uri, {
     }
 });
 
-async function run() {
+const run = async () => {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
@@ -37,6 +37,12 @@ async function run() {
             const result = await brandsCollection.find(query).toArray();
             res.send(result);
         });
+
+        app.get('/products', async (req, res) => {
+            const query = {};
+            const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        })
 
         // post data
         app.post('/products', async (req, res) => {
