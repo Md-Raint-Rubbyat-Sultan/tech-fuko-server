@@ -25,11 +25,31 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
+
+        // db and collections
+        const techFukoDb = client.db("techfukodb");
+        const brandsCollection = techFukoDb.collection("brands");
+        const productsCollection = techFukoDb.collection("products");
+
+        // get data
+        app.get('/brands', async (req, res) => {
+            const query = {};
+            const result = await brandsCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        // post data
+        app.post('/products', async (req, res) => {
+            const productInfo = req.body;
+            const result = await productsCollection.insertOne(productInfo);
+            res.send(result);
+        })
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
-        
+
     }
 }
 run().catch(console.dir);
