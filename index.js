@@ -24,13 +24,11 @@ const client = new MongoClient(uri, {
 
 const run = async () => {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
-
         // db and collections
         const techFukoDb = client.db("techfukodb");
         const brandsCollection = techFukoDb.collection("brands");
         const productsCollection = techFukoDb.collection("products");
+        const cartProductCollection = techFukoDb.collection("cart");
 
         // get data
         app.get('/brands', async (req, res) => {
@@ -39,15 +37,15 @@ const run = async () => {
             res.send(result);
         });
 
-        app.get('/products', async (req, res) => {
-            const query = {};
+        app.get('/brand-products/:brand', async (req, res) => {
+            const brand = req.params.brand;
+            const query = { brandName: brand };
             const result = await productsCollection.find(query).toArray();
             res.send(result);
         })
 
-        app.get('/brand-products/:brand', async (req, res) => {
-            const brand = req.params.brand;
-            const query = { brandName: brand };
+        app.get('/products', async (req, res) => {
+            const query = {};
             const result = await productsCollection.find(query).toArray();
             res.send(result);
         })
@@ -59,10 +57,22 @@ const run = async () => {
             res.send(result);
         })
 
+        app.get('/cart-products', async (req, res) => {
+            const query = {};
+            const result = await cartProductCollection.find(query).toArray();
+            res.send(result);
+        })
+
         // post data
         app.post('/products', async (req, res) => {
             const productInfo = req.body;
             const result = await productsCollection.insertOne(productInfo);
+            res.send(result);
+        })
+
+        app.post('/add-to-cart', async (req, res) => {
+            const productInfo = req.body;
+            const result = await cartProductCollection.insertOne(productInfo);
             res.send(result);
         })
 
@@ -71,7 +81,7 @@ const run = async () => {
             const productId = req.params.id;
             const { productName, brandName, type, price, details, rate, photo } = req.body;
             const query = { _id: new ObjectId(productId) };
-            const option = { upsert: true };
+            const options = { upsert: true };
             const update = {
                 $set: {
                     productName,
@@ -83,13 +93,19 @@ const run = async () => {
                     photo
                 }
             };
-            const result = await productsCollection.updateOne(query, update, option);
+            const result = await productsCollection.updateOne(query, update, options);
             res.send(result);
         })
 
-        // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // delete data
+        app.delete("/cart-products/:id", async (req, res) => {
+            const cartId = req.params.id;
+            const query = { productId: cartId };
+            const result = await cartProductCollection.deleteOne(query);
+            res.send(result);
+            console.log(result);
+        })
+
     } finally {
 
     }
