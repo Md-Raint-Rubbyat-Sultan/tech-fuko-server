@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 require("dotenv").config();
@@ -11,6 +11,7 @@ app.use(express.json());
 
 // mongodb url
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.m81o4rz.mongodb.net/?retryWrites=true&w=majority`;
+
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -44,10 +45,45 @@ const run = async () => {
             res.send(result);
         })
 
+        app.get('/brand-products/:brand', async (req, res) => {
+            const brand = req.params.brand;
+            const query = { brandName: brand };
+            const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.get('/single-products/:id', async (req, res) => {
+            const productId = req.params.id;
+            const query = { _id: new ObjectId(productId) };
+            const result = await productsCollection.findOne(query);
+            res.send(result);
+        })
+
         // post data
         app.post('/products', async (req, res) => {
             const productInfo = req.body;
             const result = await productsCollection.insertOne(productInfo);
+            res.send(result);
+        })
+
+        // update product
+        app.put("/single-products/:id", async (req, res) => {
+            const productId = req.params.id;
+            const { productName, brandName, type, price, details, rate, photo } = req.body;
+            const query = { _id: new ObjectId(productId) };
+            const option = { upsert: true };
+            const update = {
+                $set: {
+                    productName,
+                    brandName,
+                    type,
+                    price,
+                    details,
+                    rate,
+                    photo
+                }
+            };
+            const result = await productsCollection.updateOne(query, update, option);
             res.send(result);
         })
 
